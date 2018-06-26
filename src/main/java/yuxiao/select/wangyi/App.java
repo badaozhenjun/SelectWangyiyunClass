@@ -18,12 +18,12 @@ import com.github.crab2died.exceptions.Excel4JException;
 public class App {
 	public static void main(String[] args) throws IOException, InterruptedException, Excel4JException {
 		getInfoToExcel("http://study.163.com/course/courseMain.htm?courseId=1004561002",
-				"/Users/yuxiao/Desktop/汇编从0开始.xlsx");
+				"/Users/yuxiao/Desktop/时长/");
 		
 		//getInfoToExcel("http://study.163.com/course/courseMain.htm?courseId=1004561002#/courseDetail?tab=1","/Users/yuxiao/Desktop/汇编从0开始.xlsx");
 	}
 
-	private static void getInfoToExcel(String url, String writeToFileName) {
+	private static void getInfoToExcel(String url, String writeToPath) {
 		// 设置必要参数
 		DesiredCapabilities dcaps = new DesiredCapabilities();
 		// ssl证书支持
@@ -39,12 +39,14 @@ public class App {
 				"/Users/yuxiao/Documents/phantomjs-2.1.1-macosx/bin/phantomjs");
 		// 创建无界面浏览器对象
 		PhantomJSDriver driver = new PhantomJSDriver(dcaps);
+		String title= "defaultTitle";
 		try {
 			// 设置隐性等待（作用于全局）
 			driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
 			// 打开页面
 			driver.get(url);
 			List<WebElement> sections = driver.findElementsByClassName("chapter");
+			title = driver.findElementByClassName("u-coursetitle_title").getAttribute("innerHTML").replaceAll("&nbsp;", "");
 			float totalTime = 0;
 			ArrayList<TimeRecord> records = new ArrayList<TimeRecord>();
 			for (WebElement section : sections) {
@@ -85,14 +87,16 @@ public class App {
 			totalRecord.setTime2(String.format("%.1f", totalTime / 3600) + "");
 			records.add(totalRecord);
 			driver.quit();
+			String fileName = (writeToPath.endsWith("/")?(writeToPath+title):(writeToPath+"/"+title))+".xlsx";
 			ExcelUtils.getInstance().exportObjects2Excel(records, TimeRecord.class, true, "sheet1", true,
-					writeToFileName);
+					fileName);
+			System.out.println("写入成功:" + fileName);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			driver.quit();
 		}
-		System.out.println("写入成功:" + writeToFileName);
+		
 	}
 
 }
